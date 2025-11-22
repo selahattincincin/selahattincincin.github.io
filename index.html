@@ -79,12 +79,34 @@
         </div>
     </div>
 
+    <!-- Chat Widget -->
+    <div id="chatWidget">
+        <button id="chatButton" class="chat-button" aria-label="Chat with AI Assistant">
+            <i class="fa fa-comments"></i>
+        </button>
+
+        <div id="chatWindow" class="chat-window">
+            <div class="chat-header">
+                <h4>AI Asistan</h4>
+                <button id="closeChat" class="close-chat">&times;</button>
+            </div>
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Mesaj\u0131n\u0131z\u0131 yaz\u0131n..." />
+                <button id="sendMessage" class="send-button">
+                    <i class="fa fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="site-footer">
         <div class="text-center">
             <p>Selahattin Çinçin &copy; 2024</p>
             <p>Made with Coffee <i class="fas fa-mug-hot"></i></p>
         </div>
     </footer>
+    <script src="js/chat.js"></script>
     <script>
         (function () {
             var config = {

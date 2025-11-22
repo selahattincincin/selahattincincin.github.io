@@ -1,0 +1,16 @@
+{
+  "name": "selahattin-portfolio",
+  "version": "1.0.0",
+  "description": "Personal portfolio with AI chatbot",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
