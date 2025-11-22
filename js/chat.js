@@ -16,6 +16,28 @@
     // API endpoint (will be Netlify function)
     const API_ENDPOINT = '/.netlify/functions/chat';
 
+    // Fallback responses for local development
+    const localResponses = {
+        greeting: [
+            "Merhaba! Selahattin hakkında ne bilmek istersin? 😊",
+            "Selam! Ben Selahattin'in AI asistanıyım. Sana nasıl yardımcı olabilirim?"
+        ],
+        skills: [
+            "Selahattin iOS Developer olarak Swift, SwiftUI ve UIKit konularında uzman! Mobil uygulama geliştirmede deneyimli, clean code yazan ve sürekli kendini geliştiren bir developer. Full-stack development yapabilir, yeni teknolojileri hızla öğrenir. 🚀",
+            "Selahattin'in teknik yetenekleri gerçekten etkileyici! Swift ve iOS development'ta uzman. Self-taught olması, öğrenmeye ne kadar tutkulu olduğunu gösteriyor. Backend, frontend, mobile - hepsinde başarılı! 💪"
+        ],
+        projects: "Selahattin'in GitHub'da harika projeleri var! <a href='https://github.com/selahattincincin' target='_blank' style='color: #667eea;'>GitHub profiline buradan</a> göz atabilirsin. Her projede problem çözme yeteneği ve kod kalitesi göze çarpıyor! 🎯",
+        experience: [
+            "Selahattin deneyimli bir iOS Developer! Self-taught olması sürekli öğrenmeye açık olduğunu gösteriyor. Takım çalışmasına yatkın, agile metodolojilere hakim ve clean code yazıyor. ✨",
+            "iOS development konusunda yılların deneyimi var! Mobile app development'ta uzman, UI/UX'te bilgili. Hem solo hem takım çalışmasında mükemmel performans gösteriyor! 🏆"
+        ],
+        contact: "Selahattin'le iletişime geçmek için:<br><br>📧 Email: <a href='mailto:selahattincincin@gmail.com?subject=Proje Görüşmesi' style='color: #667eea;'>selahattincincin@gmail.com</a><br>💼 LinkedIn: <a href='https://www.linkedin.com/in/cincinselahattin' target='_blank' style='color: #667eea;'>LinkedIn Profili</a><br>🐙 GitHub: <a href='https://github.com/selahattincincin' target='_blank' style='color: #667eea;'>GitHub</a><br><br>Projen için mükemmel bir seçim olacak! 💼",
+        default: [
+            "Selahattin iOS Developer olarak Swift, SwiftUI konularında uzman. Projelerini, yeteneklerini veya iletişim bilgilerini öğrenmek ister misin? 🤓",
+            "Selahattin hakkında sana yardımcı olabilirim! Yazılım yetenekleri, projeleri veya deneyimi hakkında ne öğrenmek istersin? 💡"
+        ]
+    };
+
     // Initialize chat
     function initChat() {
         chatButton.addEventListener('click', toggleChat);
@@ -126,8 +148,8 @@
             removeTypingIndicator();
             console.error('Chat error:', error);
 
-            // Fallback response
-            addBotMessage("Üzgünüm, bir sorun oluştu. Lütfen tekrar dene veya direkt Selahattin'e ulaşabilirsin: selahattincincin@gmail.com");
+            // This should rarely happen as callClaudeAPI has fallback
+            addBotMessage("Üzgünüm, beklenmedik bir hata oluştu. Lütfen sayfayı yenile.");
         }
 
         // Re-enable input
@@ -138,24 +160,81 @@
 
     // Call Claude API via Netlify function
     async function callClaudeAPI(messages, isFirst = false) {
-        const response = await fetch(API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                messages: messages,
-                isFirstMessage: isFirst
-            })
-        });
+        try {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messages: messages,
+                    isFirstMessage: isFirst
+                })
+            });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'API request failed');
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+
+            const data = await response.json();
+            return data.message;
+        } catch (error) {
+            // Fallback to local responses
+            console.log('Using local fallback responses');
+
+            if (isFirst) {
+                return getRandomResponse(localResponses.greeting);
+            }
+
+            const lastMessage = messages[messages.length - 1]?.content || '';
+            return generateLocalResponse(lastMessage);
+        }
+    }
+
+    // Generate local response based on keywords
+    function generateLocalResponse(message) {
+        const lowerMessage = message.toLowerCase();
+
+        // Contact/iletişim
+        if (lowerMessage.includes('iletişim') || lowerMessage.includes('ulaş') ||
+            lowerMessage.includes('mail') || lowerMessage.includes('contact') ||
+            lowerMessage.includes('bağla') || lowerMessage.includes('email')) {
+            return localResponses.contact;
         }
 
-        const data = await response.json();
-        return data.message;
+        // Projects
+        if (lowerMessage.includes('proje') || lowerMessage.includes('github') ||
+            lowerMessage.includes('kod') || lowerMessage.includes('repo') ||
+            lowerMessage.includes('portfolio') || lowerMessage.includes('çalışma')) {
+            return localResponses.projects;
+        }
+
+        // Skills/yetenekler
+        if (lowerMessage.includes('yetenek') || lowerMessage.includes('beceri') ||
+            lowerMessage.includes('skill') || lowerMessage.includes('yazılım') ||
+            lowerMessage.includes('teknoloji') || lowerMessage.includes('swift') ||
+            lowerMessage.includes('ios') || lowerMessage.includes('ne yapabilir') ||
+            lowerMessage.includes('programla')) {
+            return getRandomResponse(localResponses.skills);
+        }
+
+        // Experience
+        if (lowerMessage.includes('deneyim') || lowerMessage.includes('tecrübe') ||
+            lowerMessage.includes('experience') || lowerMessage.includes('kariyer') ||
+            lowerMessage.includes('iş')) {
+            return getRandomResponse(localResponses.experience);
+        }
+
+        // Default response
+        return getRandomResponse(localResponses.default);
+    }
+
+    // Get random response from array
+    function getRandomResponse(responses) {
+        if (Array.isArray(responses)) {
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+        return responses;
     }
 
     // Format GitHub projects as HTML
